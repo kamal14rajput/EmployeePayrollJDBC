@@ -8,10 +8,18 @@ import java.util.List;
 public class EmployeePayrollDatabaseService {
 	private PreparedStatement employeePayrollPreparedStatement;
 
+	private static EmployeePayrollDatabaseService employeePayrollDatabaseService;
+
+	public static EmployeePayrollDatabaseService getInstance() {
+		if (employeePayrollDatabaseService == null)
+			employeePayrollDatabaseService = new EmployeePayrollDatabaseService();
+		return employeePayrollDatabaseService;
+	}
+
 	private Connection getConnection() throws SQLException {
 		String jdbcURL = "jdbc:mysql://localhost:3306/payroll_service?useSSL=false";
 		String username = "root";
-		String password = "kamal@123";
+		String password = "******";
 		Connection connection = null;
 		System.out.println("Connecting to database: " + jdbcURL);
 		connection = DriverManager.getConnection(jdbcURL, username, password);
@@ -19,8 +27,13 @@ public class EmployeePayrollDatabaseService {
 		return connection;
 	}
 
-	public List<EmployeePayrollData> readData() throws EmployeePayrollException {
-		String sql = "select * from employee_payroll";
+	public List<EmployeePayrollData> readData(LocalDate start, LocalDate end) throws EmployeePayrollException {
+		String sql = null;
+		if (start != null)
+			sql = String.format("SELECT * FROM employee_payroll WHERE Start BETWEEN '%s' AND '%s';",
+					Date.valueOf(start), Date.valueOf(end));
+		if (start == null)
+			sql = "SELECT * FROM employee_payroll";
 		List<EmployeePayrollData> employeePayrollData = new ArrayList();
 		try (Connection connection = this.getConnection()) {
 			Statement statement = connection.createStatement();
