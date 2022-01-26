@@ -6,10 +6,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EmployeePayrollDatabaseService {
+	private PreparedStatement employeePayrollPreparedStatement;
+
 	private Connection getConnection() throws SQLException {
 		String jdbcURL = "jdbc:mysql://localhost:3306/payroll_service?useSSL=false";
 		String username = "root";
-		String password = "cadet4kml4";
+		String password = "cadet4kamal";
 		Connection connection = null;
 		System.out.println("Connecting to database: " + jdbcURL);
 		connection = DriverManager.getConnection(jdbcURL, username, password);
@@ -17,7 +19,7 @@ public class EmployeePayrollDatabaseService {
 		return connection;
 	}
 
-	public List<EmployeePayrollData> readData(LocalDate start, LocalDate end) {
+	public List<EmployeePayrollData> readData() throws EmployeePayrollException {
 		String sql = "select * from employee_payroll";
 		List<EmployeePayrollData> employeePayrollData = new ArrayList();
 		try (Connection connection = this.getConnection()) {
@@ -25,12 +27,39 @@ public class EmployeePayrollDatabaseService {
 			ResultSet resultSet = statement.executeQuery(sql);
 			employeePayrollData = this.getEmployeePayrollData(resultSet);
 		} catch (SQLException sqlException) {
-			sqlException.printStackTrace();
+			throw new EmployeePayrollException("Cannot connect to database",
+					EmployeePayrollException.ExceptionType.CONNECTION_FAIL);
 		}
 		return employeePayrollData;
 	}
 
-	private List<EmployeePayrollData> getEmployeePayrollData(ResultSet resultSet) {
+	public int updateEmployeeData(String name, double salary) throws EmployeePayrollException {
+		try (Connection connection = this.getConnection()) {
+			String sql = String.format("UPDATE employee_payroll SET Salary = %.2f WHERE Name = '%s';", salary, name);
+			PreparedStatement preparedStatement = connection.prepareStatement(sql);
+			return preparedStatement.executeUpdate(sql);
+		} catch (SQLException sqlException) {
+			throw new EmployeePayrollException("Cannot connect to database",
+					EmployeePayrollException.ExceptionType.CONNECTION_FAIL);
+		}
+	}
+
+	public List<EmployeePayrollData> getEmployeePayrollData(String name) throws EmployeePayrollException {
+		List<EmployeePayrollData> employeePayrollData = null;
+		if (this.employeePayrollPreparedStatement == null)
+			this.prepareStatementForEmployeeData();
+		try {
+			employeePayrollPreparedStatement.setString(1, name);
+			ResultSet resultSet = employeePayrollPreparedStatement.executeQuery();
+			employeePayrollData = this.getEmployeePayrollData(resultSet);
+		} catch (SQLException sqlException) {
+			throw new EmployeePayrollException("Cannot connect to database",
+					EmployeePayrollException.ExceptionType.CONNECTION_FAIL);
+		}
+		return employeePayrollData;
+	}
+
+	private List<EmployeePayrollData> getEmployeePayrollData(ResultSet resultSet) throws EmployeePayrollException {
 		List<EmployeePayrollData> employeePayrollData = new ArrayList();
 		try {
 			while (resultSet.next()) {
@@ -41,8 +70,20 @@ public class EmployeePayrollDatabaseService {
 				employeePayrollData.add(new EmployeePayrollData(id, name, salary, startDate));
 			}
 		} catch (SQLException sqlException) {
-			sqlException.printStackTrace();
+			throw new EmployeePayrollException("Cannot execute query",
+					EmployeePayrollException.ExceptionType.CANNOT_EXECUTE_QUERY);
 		}
 		return employeePayrollData;
+	}
+
+	private void prepareStatementForEmployeeData() throws EmployeePayrollException {
+		try {
+			Connection connection = this.getConnection();
+			String sql = "SELECT * FROM employee_payroll WHERE Name = ?";
+			employeePayrollPreparedStatement = connection.prepareStatement(sql);
+		} catch (SQLException sqlException) {
+			throw new EmployeePayrollException("Cannot execute query",
+					EmployeePayrollException.ExceptionType.CANNOT_EXECUTE_QUERY);
+		}
 	}
 }
