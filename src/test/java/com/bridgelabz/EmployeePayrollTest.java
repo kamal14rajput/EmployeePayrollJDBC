@@ -26,4 +26,12 @@ public class EmployeePayrollTest {
 		boolean result = employeePayrollService.checkEmployeePayrollInSyncWithDatabase("Charlie");
 		Assert.assertTrue(result);
 	}
+
+	@Test
+	public void givenEmployeePayrollData_ShouldNumberOfEmployeesWithinDateRange() throws EmployeePayrollException {
+		EmployeePayrollService employeePayrollService = new EmployeePayrollService();
+		List<EmployeePayrollData> employeePayrollData = employeePayrollService.readEmployeePayrollData(DATABASE_IO,
+				"2018-01-01", "2022-01-26");
+		Assert.assertEquals(3, employeePayrollData.size());
+	}
 }
