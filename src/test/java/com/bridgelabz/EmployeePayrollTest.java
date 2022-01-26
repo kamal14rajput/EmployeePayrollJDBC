@@ -34,4 +34,16 @@ public class EmployeePayrollTest {
 				"2018-01-01", "2022-01-26");
 		Assert.assertEquals(3, employeePayrollData.size());
 	}
+
+	@Test
+	public void givenEmployeePayrollData_ShouldReturnNumberOfFemaleEmployeeSalaries() throws EmployeePayrollException {
+		EmployeePayrollService employeePayrollService = new EmployeePayrollService();
+		Assert.assertEquals(1, employeePayrollService.readEmployeePayrollData("COUNT", "F"));
+	}
+
+	@Test
+	public void givenEmployeePayrollData_ShouldReturnNumberOfMaleEmployeeSalaries() throws EmployeePayrollException {
+		EmployeePayrollService employeePayrollService = new EmployeePayrollService();
+		Assert.assertEquals(2, employeePayrollService.readEmployeePayrollData("COUNT", "M"));
+	}
 }

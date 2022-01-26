@@ -19,7 +19,7 @@ public class EmployeePayrollDatabaseService {
 	private Connection getConnection() throws SQLException {
 		String jdbcURL = "jdbc:mysql://localhost:3306/payroll_service?useSSL=false";
 		String username = "root";
-		String password = "******";
+		String password = "cadet4kamal";
 		Connection connection = null;
 		System.out.println("Connecting to database: " + jdbcURL);
 		connection = DriverManager.getConnection(jdbcURL, username, password);
@@ -87,6 +87,22 @@ public class EmployeePayrollDatabaseService {
 					EmployeePayrollException.ExceptionType.CANNOT_EXECUTE_QUERY);
 		}
 		return employeePayrollData;
+	}
+
+	public int readData(String calculate, String gender) throws EmployeePayrollException {
+		int sum = 0;
+		String sql = String.format("SELECT %s(Salary) FROM employee_payroll WHERE GENDER = '%s' GROUP BY Gender;",
+				calculate, gender);
+		try (Connection connection = this.getConnection()) {
+			Statement statement = connection.createStatement();
+			ResultSet resultSet = statement.executeQuery(sql);
+			resultSet.next();
+			sum = resultSet.getInt(1);
+		} catch (SQLException sqlException) {
+			throw new EmployeePayrollException("Cannot connect to database",
+					EmployeePayrollException.ExceptionType.CONNECTION_FAIL);
+		}
+		return sum;
 	}
 
 	private void prepareStatementForEmployeeData() throws EmployeePayrollException {
